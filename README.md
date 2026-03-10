@@ -273,6 +273,8 @@ layout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
 end)
 
 -- SLIDER FUNCTION
+local sliderDragState = {}
+
 local function CreateSlider(text,min,max,default)
 	local holder = Instance.new("Frame")
 	holder.Size = UDim2.new(1,-15,0,70)
@@ -322,6 +324,9 @@ local function CreateSlider(text,min,max,default)
 	thumb.Active = true
 	Instance.new("UICorner",thumb).CornerRadius = UDim.new(1,0)
 
+	local sliderKey = tostring(bar)
+	sliderDragState[sliderKey] = {dragging = false, input = nil}
+
 	local function setPercent(p)
 		p = math.clamp(p,0,1)
 		fill.Size = UDim2.new(p,0,1,0)
@@ -333,12 +338,38 @@ local function CreateSlider(text,min,max,default)
 	local function update(x)
 		local absPos = bar.AbsolutePosition.X
 		local absSize = bar.AbsoluteSize.X
-		setPercent((x-absPos)/absSize)
+		if absSize > 0 then
+			setPercent((x-absPos)/absSize)
+		end
 	end
+
+	thumb.InputBegan:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+			sliderDragState[sliderKey].dragging = true
+			sliderDragState[sliderKey].input = input
+		end
+	end)
 
 	bar.InputBegan:Connect(function(input)
 		if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+			sliderDragState[sliderKey].dragging = true
+			sliderDragState[sliderKey].input = input
 			update(input.Position.X)
+		end
+	end)
+
+	UserInputService.InputChanged:Connect(function(input)
+		if sliderDragState[sliderKey].dragging and input == sliderDragState[sliderKey].input then
+			if input.Position then
+				update(input.Position.X)
+			end
+		end
+	end)
+
+	UserInputService.InputEnded:Connect(function(input)
+		if input == sliderDragState[sliderKey].input then
+			sliderDragState[sliderKey].dragging = false
+			sliderDragState[sliderKey].input = nil
 		end
 	end)
 
@@ -1798,124 +1829,6 @@ AutoBatPanel.Visible = false
 
 -- MOVEMENT
 local FAST_SPEED = 55
-
--- === AUTO SPEED SLIDER (ADDED) ===
-do
-    local MIN_SPEED, MAX_SPEED = 30, 60
-
-    local sliderHolder = Instance.new("Frame")
-    sliderHolder.Size = UDim2.new(1, -20, 0, 60)
-    sliderHolder.Position = UDim2.new(0, 10, 0, 220)
-    sliderHolder.BackgroundTransparency = 1
-    sliderHolder.Parent = SettingsFrame
-
-    local sliderLabel = Instance.new("TextLabel")
-    sliderLabel.Size = UDim2.new(0.6, 0, 0, 18)
-    sliderLabel.Position = UDim2.new(0, 0, 0, 0)
-    sliderLabel.BackgroundTransparency = 1
-    sliderLabel.Text = "AUTO SPEED"
-    sliderLabel.Font = Enum.Font.GothamMedium
-    sliderLabel.TextSize = 14
-    sliderLabel.TextColor3 = Color3.fromRGB(230,230,230)
-    sliderLabel.TextXAlignment = Enum.TextXAlignment.Left
-    sliderLabel.Parent = sliderHolder
-
-    local sliderValue = Instance.new("TextLabel")
-    sliderValue.Size = UDim2.new(0.4, 0, 0, 18)
-    sliderValue.Position = UDim2.new(0.6, 0, 0, 0)
-    sliderValue.BackgroundTransparency = 1
-    sliderValue.Text = ""
-    sliderValue.Font = Enum.Font.GothamBold
-    sliderValue.TextSize = 14
-    sliderValue.TextColor3 = Color3.fromRGB(100,180,255)
-    sliderValue.TextXAlignment = Enum.TextXAlignment.Right
-    sliderValue.Parent = sliderHolder
-
-    local bar = Instance.new("Frame")
-    bar.Size = UDim2.new(1, 0, 0, 14)
-    bar.Position = UDim2.new(0, 0, 0, 30)
-    bar.BackgroundColor3 = Color3.fromRGB(40,40,50)
-    bar.BorderSizePixel = 0
-    bar.Parent = sliderHolder
-    Instance.new("UICorner", bar).CornerRadius = UDim.new(1,0)
-
-    local fill = Instance.new("Frame")
-    fill.Size = UDim2.new(0.5, 0, 1, 0)
-    fill.Position = UDim2.new(0,0,0,0)
-    fill.BackgroundColor3 = Color3.fromRGB(0,38,89)
-    fill.Parent = bar
-    Instance.new("UICorner", fill).CornerRadius = UDim.new(1,0)
-
-    local thumb = Instance.new("Frame")
-    thumb.Size = UDim2.new(0, 18, 0, 18)
-    thumb.Position = UDim2.new(0.5, -9, 0.5, -9)
-    thumb.BackgroundColor3 = Color3.fromRGB(255,255,255)
-    thumb.Parent = bar
-    thumb.ZIndex = 2
-    Instance.new("UICorner", thumb).CornerRadius = UDim.new(1,0)
-
-    local dragging = false
-    local activeInput = nil
-
-    local function setPercent(p)
-        p = math.clamp(p, 0, 1)
-        fill.Size = UDim2.new(p, 0, 1, 0)
-        thumb.Position = UDim2.new(p, -9, 0.5, -9)
-        local newSpeed = math.floor(MIN_SPEED + (MAX_SPEED - MIN_SPEED) * p + 0.5)
-        FAST_SPEED = newSpeed
-        sliderValue.Text = tostring(newSpeed)
-    end
-
-    local function updateFromPosition(posX)
-        local absPos = bar.AbsolutePosition.X
-        local absSize = bar.AbsoluteSize.X
-        local localX = posX - absPos
-        local p = 0
-        if absSize > 0 then p = math.clamp(localX / absSize, 0, 1) end
-        setPercent(p)
-    end
-
-    thumb.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-            dragging = true
-            activeInput = input
-        end
-    end)
-
-    bar.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-            dragging = true
-            activeInput = input
-            updateFromPosition(input.Position.X)
-        end
-    end)
-
-    UserInputService.InputChanged:Connect(function(input)
-        if not dragging or input ~= activeInput then return end
-        if input.Position then
-            updateFromPosition(input.Position.X)
-        end
-    end)
-
-    UserInputService.InputEnded:Connect(function(input)
-        if input == activeInput then
-            dragging = false
-            activeInput = nil
-        end
-    end)
-
-    local initial = FAST_SPEED or math.floor((MIN_SPEED + MAX_SPEED) / 2)
-    if initial < MIN_SPEED then initial = MIN_SPEED end
-    if initial > MAX_SPEED then initial = MAX_SPEED end
-    local perc = (initial - MIN_SPEED) / (MAX_SPEED - MIN_SPEED)
-    setPercent(perc)
-
-    RunService.RenderStepped:Connect(function()
-        local t = tick()
-        local wob = 0.02 * math.sin(t * 6)
-        fill.BackgroundTransparency = math.clamp(0.12 + wob, 0, 1)
-    end)
-end
 
 local SLOW_SPEED = 27
 local MOVE_TIMEOUT = 8
