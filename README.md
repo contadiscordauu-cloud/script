@@ -1806,14 +1806,10 @@ local function createToggle(text)
             elseif text == "CAMFOLLOW" then
                 if enabled then
                     camFollowEnabled = true
-                    aimEnabled = true
                     startCamFollow()
-                    startAimAssist()
                 else
                     camFollowEnabled = false
-                    aimEnabled = false
                     stopCamFollow()
-                    stopAimAssist()
                 end
             elseif text == "FLOAT" then
                 if enabled then
@@ -1938,7 +1934,7 @@ local function walkPath(route)
     running = true
     
     local fastSpeed = sliderValues.autoSpeed
-    local slowSpeed = sliderValues.autoSpeed * 0.5
+    local slowSpeed = sliderValues.stealSpeed
     
     startSpeed(route.pos1, fastSpeed)
     if not moveTo(route.pos1) then stopSpeed() zeroVelocity() running = false return end
