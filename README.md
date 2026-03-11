@@ -452,7 +452,7 @@ end
 
 CreateSlider("AUTO SPEED",30,60,45)
 CreateSlider("STEAL SPEED",25,29.5,27)
-CreateSlider("INF JUMP",50,65.8,60)
+CreateSlider("INF JUMP",20,200,50)
 CreateSlider("GRAVITY",0,50,0)
 CreateSlider("SPIN",0,50,0)
 
