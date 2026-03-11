@@ -481,8 +481,9 @@ end
 local function closeSettingsGui()
     local tween = TweenService:Create(SettingsUIScale, TweenInfo.new(0.25, Enum.EasingStyle.Quad), {Scale = 0})
     tween:Play()
-    tween.Completed:Wait()
-    SettingsFrame.Visible = false
+    tween.Completed:Connect(function()
+        SettingsFrame.Visible = false
+    end)
 end
 
 local settingsOpened = false
