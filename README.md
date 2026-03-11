@@ -452,8 +452,8 @@ end
 
 CreateSlider("AUTO SPEED",30,60,45)
 CreateSlider("STEAL SPEED",25,29.5,27)
-CreateSlider("INF JUMP",50,65.8,60)
-CreateSlider("GRAVITY",0,50,0)
+CreateSlider("INF JUMP",50,53.7,60)
+CreateSlider("GRAVITY",0,30.5,0)
 CreateSlider("SPIN",0,50,0)
 
 CreateToggle("SAVE CONFIG")
@@ -1009,22 +1009,34 @@ local antiConnection = nil
 local antiKeysPressed = {W=false,A=false,S=false,D=false,Space=false}
 local antiLastSafePos = nil
 local antiLastSafeTime = 0
-local antiLastFixTime = 0
 
 local function antiIsBadState(state)
     return state == Enum.HumanoidStateType.Ragdoll
         or state == Enum.HumanoidStateType.Physics
         or state == Enum.HumanoidStateType.FallingDown
+        or state == Enum.HumanoidStateType.PlatformStanding
 end
 
 local function antiRemoveRagdollInstant()
+    player:SetAttribute("RagdollEndTime", 0)
+    
     local char = player.Character
     if not char then return end
     local humanoid = char:FindFirstChildOfClass("Humanoid")
     if humanoid then
         pcall(function()
             humanoid.PlatformStand = false
-            humanoid.Sit = false
+            humanoid:ChangeState(Enum.HumanoidStateType.GettingUp)
+            task.wait()
+            humanoid:ChangeState(Enum.HumanoidStateType.Running)
+        end)
+    end
+    
+    local camera = workspace.CurrentCamera
+    if camera and humanoid and camera.CameraSubject ~= humanoid then
+        pcall(function()
+            camera.CameraSubject = humanoid
+            camera.CameraType = Enum.CameraType.Custom
         end)
     end
 end
@@ -1033,50 +1045,72 @@ local function antiStartSystem()
     if antiConnection then return end
     antiConnection = RunService.Heartbeat:Connect(function()
         if not AntiRagdollEnabled then return end
+        
         local char = player.Character
         if not char then return end
+        
         local humanoid = char:FindFirstChildOfClass("Humanoid")
         local root = char:FindFirstChild("HumanoidRootPart")
         if not humanoid or not root then return end
-
+        
         local state = humanoid:GetState()
         local vel = root.AssemblyLinearVelocity
-
+        
+        -- salva posição segura
         if humanoid.FloorMaterial ~= Enum.Material.Air
             and not antiIsBadState(state)
             and vel.Magnitude < 25
             and tick() - antiLastSafeTime > 0.4 then
-
+            
             antiLastSafePos = Vector3.new(root.Position.X, 0, root.Position.Z)
             antiLastSafeTime = tick()
         end
-
-        if antiIsBadState(state) and tick() - antiLastFixTime > 0.2 then
+        
+        -- remove ragdoll instantâneo
+        if antiIsBadState(state) then
             antiRemoveRagdollInstant()
-            antiLastFixTime = tick()
+            
+            -- reativa motores
             for _, m in char:GetDescendants() do
                 if m:IsA("Motor6D") and not m.Enabled then
                     m.Enabled = true
                 end
             end
         end
-
+        
+        -- anti launch forte
+        if antiIsBadState(state) and antiLastSafePos and vel.Magnitude > 40 then
+            local y = root.Position.Y
+            pcall(function() root.CFrame = CFrame.new(antiLastSafePos.X, y, antiLastSafePos.Z) end)
+            local newY = math.abs(vel.Y) > 40 and 0 or vel.Y
+            pcall(function()
+                root.AssemblyLinearVelocity = Vector3.new(0, newY, 0)
+                root.AssemblyAngularVelocity = Vector3.zero
+            end)
+        end
+        
+        -- movimento forçado
         humanoid.PlatformStand = false
         humanoid.Sit = false
-
+        
         local move = Vector3.new()
         if antiKeysPressed.W then move += Vector3.new(0,0,-1) end
         if antiKeysPressed.S then move += Vector3.new(0,0,1) end
         if antiKeysPressed.A then move += Vector3.new(-1,0,0) end
         if antiKeysPressed.D then move += Vector3.new(1,0,0) end
-
+        
         if move.Magnitude > 0 then
             pcall(function() humanoid:Move(move.Unit, true) end)
         else
             pcall(function() humanoid:Move(Vector3.zero) end)
         end
-
+        
         humanoid.Jump = antiKeysPressed.Space
+        
+        -- anti spin
+        if root.AssemblyAngularVelocity.Magnitude > 5 then
+            pcall(function() root.AssemblyAngularVelocity = Vector3.new(0, root.AssemblyAngularVelocity.Y, 0) end)
+        end
     end)
 end
 
