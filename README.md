@@ -19,7 +19,7 @@ ScreenGui.ResetOnSpawn = false
 ScreenGui.IgnoreGuiInset = true
 
 -- ==================== IMPROVED DRAG SYSTEM ====================
-local draggedFrames = {} -- Tracks which input is dragging which frame
+local draggedFrames = {}
 
 local function createImprovedDrag(frame, onDragStart, onDragEnd)
     local dragging = false
@@ -119,8 +119,6 @@ GearButton.TextSize = 24
 GearButton.TextColor3 = Color3.new(1,1,1)
 GearButton.Parent = MainFrame
 
--- ==================== NOVO SETTINGS FRAME COM SLIDERS ====================
-
 -- POTATO SYSTEM
 local PotatoEnabled = false
 local partData = {}
@@ -130,67 +128,67 @@ local Lighting = game:GetService("Lighting")
 local Terrain = workspace:FindFirstChildOfClass("Terrain")
 
 local originalLighting = {
-	GlobalShadows = Lighting.GlobalShadows,
-	FogEnd = Lighting.FogEnd,
-	FogStart = Lighting.FogStart
+    GlobalShadows = Lighting.GlobalShadows,
+    FogEnd = Lighting.FogEnd,
+    FogStart = Lighting.FogStart
 }
 
 local function EnablePotato()
-	pcall(function()
-		settings().Rendering.QualityLevel = Enum.QualityLevel.Level01
-	end)
-	Lighting.GlobalShadows = false
-	Lighting.FogEnd = 9e9
-	Lighting.FogStart = 9e9
-	if Terrain then
-		pcall(function()
-			Terrain.WaterWaveSize = 0
-			Terrain.WaterWaveSpeed = 0
-			Terrain.WaterReflectance = 0
-			Terrain.WaterTransparency = 1
-		end)
-	end
-	for _,obj in ipairs(workspace:GetDescendants()) do
-		pcall(function()
-			if obj:IsA("BasePart") then
-				partData[obj] = {
-					Material = obj.Material,
-					Reflectance = obj.Reflectance,
-					CastShadow = obj.CastShadow
-				}
-				obj.CastShadow = false
-				obj.Material = Enum.Material.Plastic
-				obj.Reflectance = 0
-			elseif obj:IsA("ParticleEmitter") or obj:IsA("Trail") or obj:IsA("Beam") or obj:IsA("Smoke") or obj:IsA("Fire") or obj:IsA("Sparkles") then
-				emitterData[obj] = obj.Enabled
-				obj.Enabled = false
-			end
-		end)
-	end
+    pcall(function()
+        settings().Rendering.QualityLevel = Enum.QualityLevel.Level01
+    end)
+    Lighting.GlobalShadows = false
+    Lighting.FogEnd = 9e9
+    Lighting.FogStart = 9e9
+    if Terrain then
+        pcall(function()
+            Terrain.WaterWaveSize = 0
+            Terrain.WaterWaveSpeed = 0
+            Terrain.WaterReflectance = 0
+            Terrain.WaterTransparency = 1
+        end)
+    end
+    for _,obj in ipairs(workspace:GetDescendants()) do
+        pcall(function()
+            if obj:IsA("BasePart") then
+                partData[obj] = {
+                    Material = obj.Material,
+                    Reflectance = obj.Reflectance,
+                    CastShadow = obj.CastShadow
+                }
+                obj.CastShadow = false
+                obj.Material = Enum.Material.Plastic
+                obj.Reflectance = 0
+            elseif obj:IsA("ParticleEmitter") or obj:IsA("Trail") or obj:IsA("Beam") or obj:IsA("Smoke") or obj:IsA("Fire") or obj:IsA("Sparkles") then
+                emitterData[obj] = obj.Enabled
+                obj.Enabled = false
+            end
+        end)
+    end
 end
 
 local function DisablePotato()
-	pcall(function()
-		settings().Rendering.QualityLevel = Enum.QualityLevel.Automatic
-	end)
-	Lighting.GlobalShadows = originalLighting.GlobalShadows
-	Lighting.FogEnd = originalLighting.FogEnd
-	Lighting.FogStart = originalLighting.FogStart
-	for part,data in pairs(partData) do
-		if part and part.Parent then
-			part.Material = data.Material
-			part.Reflectance = data.Reflectance
-			part.CastShadow = data.CastShadow
-		end
-	end
-	for emitter,state in pairs(emitterData) do
-		if emitter and emitter.Parent then
-			emitter.Enabled = state
-		end
-	end
+    pcall(function()
+        settings().Rendering.QualityLevel = Enum.QualityLevel.Automatic
+    end)
+    Lighting.GlobalShadows = originalLighting.GlobalShadows
+    Lighting.FogEnd = originalLighting.FogEnd
+    Lighting.FogStart = originalLighting.FogStart
+    for part,data in pairs(partData) do
+        if part and part.Parent then
+            part.Material = data.Material
+            part.Reflectance = data.Reflectance
+            part.CastShadow = data.CastShadow
+        end
+    end
+    for emitter,state in pairs(emitterData) do
+        if emitter and emitter.Parent then
+            emitter.Enabled = state
+        end
+    end
 end
 
--- SETTINGS FRAME NOVO
+-- SETTINGS FRAME
 local SettingsFrame = Instance.new("Frame")
 SettingsFrame.Size = UDim2.new(0, 300, 0, 420)
 SettingsFrame.Position = UDim2.new(0.5, 180, 0.5, -210)
@@ -215,7 +213,7 @@ SettingsFrame.Visible = true
 
 TweenService:Create(SettingsUIScale, TweenInfo.new(0.4, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Scale = 1}):Play()
 
--- TITLE BAR NOVO
+-- TITLE BAR
 local TitleBar = Instance.new("Frame")
 TitleBar.Size = UDim2.new(1,0,0,50)
 TitleBar.BackgroundTransparency = 1
@@ -235,25 +233,25 @@ settingsTitle.Parent = TitleBar
 local dragging, dragInput, dragStart, startPos
 
 TitleBar.InputBegan:Connect(function(input)
-	if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-		dragging = true
-		dragInput = input
-		dragStart = input.Position
-		startPos = SettingsFrame.Position
-	end
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        dragging = true
+        dragInput = input
+        dragStart = input.Position
+        startPos = SettingsFrame.Position
+    end
 end)
 
 UserInputService.InputChanged:Connect(function(input)
-	if dragging and input == dragInput then
-		local delta = input.Position - dragStart
-		SettingsFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
-	end
+    if dragging and input == dragInput then
+        local delta = input.Position - dragStart
+        SettingsFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+    end
 end)
 
 UserInputService.InputEnded:Connect(function(input)
-	if input == dragInput then
-		dragging = false
-	end
+    if input == dragInput then
+        dragging = false
+    end
 end)
 
 -- SCROLL
@@ -269,182 +267,178 @@ local layout = Instance.new("UIListLayout",Scroll)
 layout.Padding = UDim.new(0,22)
 
 layout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-	Scroll.CanvasSize = UDim2.new(0,0,0,layout.AbsoluteContentSize.Y + 10)
+    Scroll.CanvasSize = UDim2.new(0,0,0,layout.AbsoluteContentSize.Y + 10)
 end)
 
 -- SLIDER FUNCTION
-local sliderDragState = {}
-
 local function CreateSlider(text,min,max,default)
-	local holder = Instance.new("Frame")
-	holder.Size = UDim2.new(1,-15,0,70)
-	holder.BackgroundTransparency = 1
-	holder.Parent = Scroll
+    local holder = Instance.new("Frame")
+    holder.Size = UDim2.new(1,-15,0,70)
+    holder.BackgroundTransparency = 1
+    holder.Parent = Scroll
 
-	local label = Instance.new("TextLabel")
-	label.Size = UDim2.new(1,0,0,20)
-	label.BackgroundTransparency = 1
-	label.Text = text
-	label.Font = Enum.Font.GothamBold
-	label.TextSize = 14
-	label.TextColor3 = Color3.new(1,1,1)
-	label.TextXAlignment = Enum.TextXAlignment.Center
-	label.Parent = holder
+    local label = Instance.new("TextLabel")
+    label.Size = UDim2.new(1,0,0,20)
+    label.BackgroundTransparency = 1
+    label.Text = text
+    label.Font = Enum.Font.GothamBold
+    label.TextSize = 14
+    label.TextColor3 = Color3.new(1,1,1)
+    label.TextXAlignment = Enum.TextXAlignment.Center
+    label.Parent = holder
 
-	local valueLabel = Instance.new("TextLabel")
-	valueLabel.Size = UDim2.new(1,0,0,18)
-	valueLabel.Position = UDim2.new(0,0,0,20)
-	valueLabel.BackgroundTransparency = 1
-	valueLabel.Font = Enum.Font.GothamBold
-	valueLabel.TextSize = 13
-	valueLabel.TextColor3 = Color3.fromRGB(150,220,255)
-	valueLabel.TextXAlignment = Enum.TextXAlignment.Center
-	valueLabel.Parent = holder
+    local valueLabel = Instance.new("TextLabel")
+    valueLabel.Size = UDim2.new(1,0,0,18)
+    valueLabel.Position = UDim2.new(0,0,0,20)
+    valueLabel.BackgroundTransparency = 1
+    valueLabel.Font = Enum.Font.GothamBold
+    valueLabel.TextSize = 13
+    valueLabel.TextColor3 = Color3.fromRGB(150,220,255)
+    valueLabel.TextXAlignment = Enum.TextXAlignment.Center
+    valueLabel.Parent = holder
 
-	local bar = Instance.new("Frame")
-	bar.Size = UDim2.new(1,0,0,12)
-	bar.Position = UDim2.new(0,0,0,45)
-	bar.BackgroundColor3 = Color3.fromRGB(30,50,80)
-	bar.Parent = holder
-	Instance.new("UICorner",bar).CornerRadius = UDim.new(1,0)
+    local bar = Instance.new("Frame")
+    bar.Size = UDim2.new(1,0,0,12)
+    bar.Position = UDim2.new(0,0,0,45)
+    bar.BackgroundColor3 = Color3.fromRGB(30,50,80)
+    bar.Parent = holder
+    Instance.new("UICorner",bar).CornerRadius = UDim.new(1,0)
 
-	local fill = Instance.new("Frame")
-	fill.Size = UDim2.new(0,0,1,0)
-	fill.BackgroundColor3 = Color3.fromRGB(0,122,204)
-	fill.Parent = bar
-	Instance.new("UICorner",fill).CornerRadius = UDim.new(1,0)
+    local fill = Instance.new("Frame")
+    fill.Size = UDim2.new(0,0,1,0)
+    fill.BackgroundColor3 = Color3.fromRGB(0,122,204)
+    fill.Parent = bar
+    Instance.new("UICorner",fill).CornerRadius = UDim.new(1,0)
 
-	local thumb = Instance.new("Frame")
-	thumb.Size = UDim2.new(0,18,0,18)
-	thumb.AnchorPoint = Vector2.new(0.5,0.5)
-	thumb.Position = UDim2.new(0,0,0.5,0)
-	thumb.BackgroundColor3 = Color3.fromRGB(0,122,204)
-	thumb.Parent = bar
-	thumb.ZIndex = 5
-	thumb.Active = true
-	Instance.new("UICorner",thumb).CornerRadius = UDim.new(1,0)
+    local thumb = Instance.new("Frame")
+    thumb.Size = UDim2.new(0,18,0,18)
+    thumb.AnchorPoint = Vector2.new(0.5,0.5)
+    thumb.Position = UDim2.new(0,0,0.5,0)
+    thumb.BackgroundColor3 = Color3.fromRGB(0,122,204)
+    thumb.Parent = bar
+    thumb.ZIndex = 5
+    thumb.Active = true
+    Instance.new("UICorner",thumb).CornerRadius = UDim.new(1,0)
 
-	local sliderKey = tostring(bar)
-	sliderDragState[sliderKey] = {dragging = false, input = nil}
+    -- Local state for THIS slider only
+    local dragging = false
+    local dragInput = nil
 
-	local function setPercent(p)
-		p = math.clamp(p,0,1)
-		fill.Size = UDim2.new(p,0,1,0)
-		thumb.Position = UDim2.new(p,0,0.5,0)
-		local value = min + (max-min)*p
-		valueLabel.Text = string.format("%.1f", value)
-	end
+    local function setPercent(p)
+        p = math.clamp(p,0,1)
+        fill.Size = UDim2.new(p,0,1,0)
+        thumb.Position = UDim2.new(p,0,0.5,0)
+        local value = min + (max-min)*p
+        valueLabel.Text = string.format("%.1f", value)
+    end
 
-	local function update(x)
-		local absPos = bar.AbsolutePosition.X
-		local absSize = bar.AbsoluteSize.X
-		if absSize > 0 then
-			setPercent((x-absPos)/absSize)
-		end
-	end
+    local function update(x)
+        local absPos = bar.AbsolutePosition.X
+        local absSize = bar.AbsoluteSize.X
+        if absSize > 0 then
+            setPercent((x-absPos)/absSize)
+        end
+    end
 
-	thumb.InputBegan:Connect(function(input)
-		if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-			sliderDragState[sliderKey].dragging = true
-			sliderDragState[sliderKey].input = input
-		end
-	end)
+    thumb.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            dragging = true
+            dragInput = input
+        end
+    end)
 
-	bar.InputBegan:Connect(function(input)
-		if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-			sliderDragState[sliderKey].dragging = true
-			sliderDragState[sliderKey].input = input
-			update(input.Position.X)
-		end
-	end)
+    bar.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            dragging = true
+            dragInput = input
+            update(input.Position.X)
+        end
+    end)
 
-	UserInputService.InputChanged:Connect(function(input)
-		if sliderDragState[sliderKey].dragging and input == sliderDragState[sliderKey].input then
-			if input.Position then
-				update(input.Position.X)
-			end
-		end
-	end)
+    UserInputService.InputChanged:Connect(function(input)
+        if dragging and input == dragInput then
+            if input.Position then
+                update(input.Position.X)
+            end
+        end
+    end)
 
-	UserInputService.InputEnded:Connect(function(input)
-		if input == sliderDragState[sliderKey].input then
-			sliderDragState[sliderKey].dragging = false
-			sliderDragState[sliderKey].input = nil
-		end
-	end)
+    UserInputService.InputEnded:Connect(function(input)
+        if input == dragInput then
+            dragging = false
+            dragInput = nil
+        end
+    end)
 
-	setPercent((default-min)/(max-min))
+    setPercent((default-min)/(max-min))
 end
 
 -- TOGGLE FUNCTION
 local function CreateToggle(text,callback)
-	local holder = Instance.new("Frame")
-	holder.Size = UDim2.new(1,-15,0,50)
-	holder.BackgroundTransparency = 1
-	holder.Parent = Scroll
+    local holder = Instance.new("Frame")
+    holder.Size = UDim2.new(1,-15,0,50)
+    holder.BackgroundTransparency = 1
+    holder.Parent = Scroll
 
-	local label = Instance.new("TextLabel")
-	label.Size = UDim2.new(0.65,0,1,0)
-	label.BackgroundTransparency = 1
-	label.Text = text
-	label.Font = Enum.Font.GothamBold
-	label.TextSize = 14
-	label.TextColor3 = Color3.new(1,1,1)
-	label.TextXAlignment = Enum.TextXAlignment.Left
-	label.Parent = holder
+    local label = Instance.new("TextLabel")
+    label.Size = UDim2.new(0.65,0,1,0)
+    label.BackgroundTransparency = 1
+    label.Text = text
+    label.Font = Enum.Font.GothamBold
+    label.TextSize = 14
+    label.TextColor3 = Color3.new(1,1,1)
+    label.TextXAlignment = Enum.TextXAlignment.Left
+    label.Parent = holder
 
-	local toggle = Instance.new("Frame")
-	toggle.Size = UDim2.new(0,50,0,26)
-	toggle.Position = UDim2.new(1,-55,0.5,-13)
-	toggle.BackgroundColor3 = Color3.fromRGB(40,60,90)
-	toggle.Parent = holder
-	Instance.new("UICorner",toggle).CornerRadius = UDim.new(1,0)
+    local toggle = Instance.new("Frame")
+    toggle.Size = UDim2.new(0,50,0,26)
+    toggle.Position = UDim2.new(1,-55,0.5,-13)
+    toggle.BackgroundColor3 = Color3.fromRGB(40,60,90)
+    toggle.Parent = holder
+    Instance.new("UICorner",toggle).CornerRadius = UDim.new(1,0)
 
-	local circle = Instance.new("Frame")
-	circle.Size = UDim2.new(0,22,0,22)
-	circle.Position = UDim2.new(0,2,0.5,-11)
-	circle.BackgroundColor3 = Color3.new(1,1,1)
-	circle.Parent = toggle
-	Instance.new("UICorner",circle).CornerRadius = UDim.new(1,0)
+    local circle = Instance.new("Frame")
+    circle.Size = UDim2.new(0,22,0,22)
+    circle.Position = UDim2.new(0,2,0.5,-11)
+    circle.BackgroundColor3 = Color3.new(1,1,1)
+    circle.Parent = toggle
+    Instance.new("UICorner",circle).CornerRadius = UDim.new(1,0)
 
-	local state = false
+    local state = false
 
-	toggle.InputBegan:Connect(function(input)
-		if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-			state = not state
-			if state then
-				TweenService:Create(toggle,TweenInfo.new(0.25),{BackgroundColor3 = Color3.fromRGB(0,140,255)}):Play()
-				TweenService:Create(circle,TweenInfo.new(0.25),{Position = UDim2.new(1,-24,0.5,-11)}):Play()
-			else
-				TweenService:Create(toggle,TweenInfo.new(0.25),{BackgroundColor3 = Color3.fromRGB(40,60,90)}):Play()
-				TweenService:Create(circle,TweenInfo.new(0.25),{Position = UDim2.new(0,2,0.5,-11)}):Play()
-			end
-			if callback then callback(state) end
-		end
-	end)
+    toggle.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            state = not state
+            if state then
+                TweenService:Create(toggle,TweenInfo.new(0.25),{BackgroundColor3 = Color3.fromRGB(0,140,255)}):Play()
+                TweenService:Create(circle,TweenInfo.new(0.25),{Position = UDim2.new(1,-24,0.5,-11)}):Play()
+            else
+                TweenService:Create(toggle,TweenInfo.new(0.25),{BackgroundColor3 = Color3.fromRGB(40,60,90)}):Play()
+                TweenService:Create(circle,TweenInfo.new(0.25),{Position = UDim2.new(0,2,0.5,-11)}):Play()
+            end
+            if callback then callback(state) end
+        end
+    end)
 end
 
--- CRIAR SLIDERS
 CreateSlider("AUTO SPEED",30,60,45)
 CreateSlider("STEAL SPEED",25,29.5,27)
 CreateSlider("INF JUMP",50,65.8,60)
 CreateSlider("GRAVITY",30,50,30)
 CreateSlider("SPIN",0,30.0,0)
 
--- CRIAR TOGGLES
 CreateToggle("AUTO LOAD")
 CreateToggle("SAVE CONFIG")
 
 CreateToggle("POTATO MODE",function(state)
-	PotatoEnabled = state
-	if state then
-		EnablePotato()
-	else
-		DisablePotato()
-	end
+    PotatoEnabled = state
+    if state then
+        EnablePotato()
+    else
+        DisablePotato()
+    end
 end)
 
--- OPEN/CLOSE FUNCTIONS
 local function openSettingsGui()
     SettingsFrame.Visible = true
     TweenService:Create(SettingsUIScale, TweenInfo.new(0.35, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Scale = 1}):Play()
@@ -615,7 +609,7 @@ UserInputService.JumpRequest:Connect(function()
     end
 end)
 
--- ==================== GRAVITY CONTROLLER LOGIC ====================
+-- GRAVITY CONTROLLER LOGIC
 local DEFAULT_GRAVITY = 196.2
 local GalaxyGravityPercent = 70
 local HOP_POWER = 35
@@ -1545,10 +1539,8 @@ AutoBatButton.Font = Enum.Font.GothamBold
 AutoBatButton.TextSize = 14
 Instance.new("UICorner", AutoBatButton).CornerRadius = UDim.new(0,6)
 
--- Improved drag para AutoBatPanel
 createImprovedDrag(AutoBatPanel)
 
--- AutoBat panel state
 local autoBatRunning = false
 AutoBatButton.MouseButton1Click:Connect(function()
     if not autoBatRunning then
@@ -1564,7 +1556,7 @@ AutoBatButton.MouseButton1Click:Connect(function()
     end
 end)
 
--- AUTOBACK ENABLED VARIABLE
+-- AUTOBACK
 local autoBackEnabled = false
 
 -- Movement routes
@@ -1776,14 +1768,11 @@ for _, name in pairs(options) do
     t.Parent = Container
 end
 
--- Improved drag para MainFrame
 createImprovedDrag(MainFrame, function()
     TweenService:Create(UIScale, TweenInfo.new(0.15), {Scale = 0.97}):Play()
 end, function()
     TweenService:Create(UIScale, TweenInfo.new(0.2, Enum.EasingStyle.Back), {Scale = 1}):Play()
 end)
-
--- NOTE: removed createImprovedDrag(SettingsFrame, ...) because this new SettingsFrame uses TitleBar drag
 
 -- Bubble
 local Bubble = Instance.new("Frame")
@@ -1814,7 +1803,6 @@ Bubble.InputBegan:Connect(function(input, gp)
     end
 end)
 
--- Improved drag para Bubble
 createImprovedDrag(Bubble, function()
     TweenService:Create(BubbleScale, TweenInfo.new(0.15), {Scale = 0.9}):Play()
 end, function()
@@ -1829,7 +1817,6 @@ AutoBatPanel.Visible = false
 
 -- MOVEMENT
 local FAST_SPEED = 55
-
 local SLOW_SPEED = 27
 local MOVE_TIMEOUT = 8
 local ARRIVE_THRESHOLD = 1.0
@@ -1962,23 +1949,22 @@ LeftActivate.MouseButton1Click:Connect(function()
     end)
 end)
 
--- Gear button now toggles the new SettingsFrame (scale tween)
 local settingsOpened = false
 GearButton.MouseButton1Click:Connect(function()
     TweenService:Create(GearButton, TweenInfo.new(0.5, Enum.EasingStyle.Linear), {Rotation = GearButton.Rotation + 360}):Play()
     settingsOpened = not settingsOpened
     if settingsOpened then
         SettingsFrame.Visible = true
-        TweenService:Create(scale, TweenInfo.new(0.35, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Scale = 1}):Play()
+        TweenService:Create(SettingsUIScale, TweenInfo.new(0.35, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Scale = 1}):Play()
         TweenService:Create(SettingsFrame, TweenInfo.new(0.25), {BackgroundTransparency = 0.08}):Play()
     else
-        local t = TweenService:Create(scale, TweenInfo.new(0.25, Enum.EasingStyle.Quad), {Scale = 0})
+        local t = TweenService:Create(SettingsUIScale, TweenInfo.new(0.25, Enum.EasingStyle.Quad), {Scale = 0})
         t:Play()
         t.Completed:Wait()
         SettingsFrame.Visible = false
     end
 end)
 
-print("✓ Script pronto com DRAG MELHORADO!")
-print("✓ GUIs: MainFrame, SettingsFrame, AutoBatPanel, Bubble - todos com drag multi-touch seguro!")
-print("✓ FLOAT TOGGLE: Integrado! Aperte Space no ar para mini-hops (~70% gravity)")
+print("✓ Script pronto com SLIDER CORRIGIDO!")
+print("✓ Cada slider agora tem seu próprio estado independente!")
+print("✓ Arraste um slider sem afetar os outros!")
