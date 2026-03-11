@@ -270,6 +270,15 @@ layout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
     Scroll.CanvasSize = UDim2.new(0,0,0,layout.AbsoluteContentSize.Y + 10)
 end)
 
+-- Variáveis de controle dos sliders
+local sliderValues = {
+    autoSpeed = 45,
+    stealSpeed = 27,
+    infJump = 60,
+    gravity = 30,
+    spin = 0
+}
+
 -- SLIDER FUNCTION
 local currentlyDraggingSlider = nil
 
@@ -332,6 +341,19 @@ local function CreateSlider(text,min,max,default)
         thumb.Position = UDim2.new(p,0,0.5,0)
         local value = min + (max-min)*p
         valueLabel.Text = string.format("%.1f", value)
+        
+        -- Atualizar variável do slider
+        if text == "AUTO SPEED" then
+            sliderValues.autoSpeed = value
+        elseif text == "STEAL SPEED" then
+            sliderValues.stealSpeed = value
+        elseif text == "INF JUMP" then
+            sliderValues.infJump = value
+        elseif text == "GRAVITY" then
+            sliderValues.gravity = value
+        elseif text == "SPIN" then
+            sliderValues.spin = value
+        end
     end
 
     local function update(x)
@@ -592,7 +614,6 @@ end
 -- Jump system variables
 local character, hrp, hum
 local jumpActive = false
-local jumpValue = 50
 
 local function setupCharacter(char)
     character = char
@@ -608,7 +629,7 @@ UserInputService.JumpRequest:Connect(function()
         pcall(function()
             hrp.AssemblyLinearVelocity = Vector3.new(
                 hrp.AssemblyLinearVelocity.X,
-                jumpValue,
+                sliderValues.infJump,
                 hrp.AssemblyLinearVelocity.Z
             )
         end)
@@ -617,7 +638,6 @@ end)
 
 -- ==================== GRAVITY CONTROLLER LOGIC ====================
 local DEFAULT_GRAVITY = 196.2
-local GalaxyGravityPercent = 70
 local HOP_POWER = 35
 local HOP_COOLDOWN = 0.08
 
@@ -658,7 +678,7 @@ local function updateGalaxyForce()
             mass = mass + p:GetMass()
         end
     end
-    local tg = DEFAULT_GRAVITY * (GalaxyGravityPercent / 100)
+    local tg = DEFAULT_GRAVITY * (sliderValues.gravity / 100)
     galaxyVectorForce.Force = Vector3.new(0, mass * (DEFAULT_GRAVITY - tg) * 0.95, 0)
 end
 
@@ -672,7 +692,7 @@ local function adjustGalaxyJump()
             hum.JumpPower = originalJumpPower
             return
         end
-        local ratio = math.sqrt((DEFAULT_GRAVITY * (GalaxyGravityPercent / 100)) / DEFAULT_GRAVITY)
+        local ratio = math.sqrt((DEFAULT_GRAVITY * (sliderValues.gravity / 100)) / DEFAULT_GRAVITY)
         hum.JumpPower = originalJumpPower * ratio
     end)
 end
@@ -1379,7 +1399,6 @@ end
 
 -- SPIN logic
 local spinActive = false
-local SPIN_SPEED = 90
 
 local function enableSpin()
     spinActive = true
@@ -1402,7 +1421,7 @@ RunService.RenderStepped:Connect(function()
         local r = getHRP()
         if r then
             pcall(function()
-                r.AssemblyAngularVelocity = Vector3.new(0, SPIN_SPEED, 0)
+                r.AssemblyAngularVelocity = Vector3.new(0, sliderValues.spin, 0)
             end)
             local hh = player.Character and player.Character:FindFirstChildOfClass("Humanoid")
             if hh then pcall(function() hh.AutoRotate = false end) end
@@ -1822,8 +1841,6 @@ RightPanel.Visible = false
 AutoBatPanel.Visible = false
 
 -- MOVEMENT
-local FAST_SPEED = 55
-local SLOW_SPEED = 27
 local MOVE_TIMEOUT = 8
 local ARRIVE_THRESHOLD = 1.0
 
@@ -1878,10 +1895,13 @@ local function walkPath(route)
     if running then return end
     running = true
     
-    startSpeed(route.pos1, FAST_SPEED)
+    local fastSpeed = sliderValues.autoSpeed
+    local slowSpeed = sliderValues.autoSpeed * 0.5
+    
+    startSpeed(route.pos1, fastSpeed)
     if not moveTo(route.pos1) then stopSpeed() zeroVelocity() running = false return end
     
-    startSpeed(route.pos2, FAST_SPEED)
+    startSpeed(route.pos2, fastSpeed)
     if not moveTo(route.pos2) then stopSpeed() zeroVelocity() running = false return end
     
     if not autoBackEnabled then
@@ -1894,10 +1914,10 @@ local function walkPath(route)
     
     task.wait(0.6)
     
-    startSpeed(route.after_pos1, SLOW_SPEED)
+    startSpeed(route.after_pos1, slowSpeed)
     if not moveTo(route.after_pos1) then stopSpeed() zeroVelocity() running = false return end
     
-    startSpeed(route.after_pos2, SLOW_SPEED)
+    startSpeed(route.after_pos2, slowSpeed)
     if not moveTo(route.after_pos2) then stopSpeed() zeroVelocity() running = false return end
     
     stopSpeed()
@@ -1971,6 +1991,9 @@ GearButton.MouseButton1Click:Connect(function()
     end
 end)
 
-print("✓ Script pronto com SLIDER CORRIGIDO!")
-print("✓ Apenas um slider por vez!")
-print("✓ Toggle AUTO LOAD removido!")
+print("✓ Script completo com SLIDERS LIGADOS!")
+print("✓ AUTO SPEED controla velocidade do walkpath (30-60)")
+print("✓ STEAL SPEED pronto para usar (25-29.5)")
+print("✓ INF JUMP controla altura do pulo (50-65.8)")
+print("✓ GRAVITY controla % de gravidade (30-50)")
+print("✓ SPIN controla velocidade de rotação (0-30)")
