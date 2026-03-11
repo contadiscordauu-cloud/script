@@ -87,23 +87,20 @@ local function closeGui()
     local tweenBg = TweenService:Create(MainFrame, TweenInfo.new(0.25), {BackgroundTransparency = 0.1})
     tweenMain:Play()
     tweenBg:Play()
-    
+
     tweenMain.Completed:Connect(function()
         MainFrame.Visible = false
+    end)
+
+    -- Close settings if visible (don't rely only on settingsOpened flag)
+    if SettingsFrame and SettingsFrame.Visible then
+        -- Use the existing closeSettingsGui to animate hide
+        closeSettingsGui()
         if settingsOpened then
-            local tweenSettings = TweenService:Create(SettingsUIScale, TweenInfo.new(0.25, Enum.EasingStyle.Quad), {Scale = 0})
-            local tweenSettingsBg = TweenService:Create(SettingsFrame, TweenInfo.new(0.25), {BackgroundTransparency = 0.1})
-            tweenSettings:Play()
-            tweenSettingsBg:Play()
-            
-            tweenSettings.Completed:Connect(function()
-                SettingsFrame.Visible = false
-            end)
-            
             TweenService:Create(GearButton, TweenInfo.new(0.5, Enum.EasingStyle.Linear), {Rotation = GearButton.Rotation + 360}):Play()
             settingsOpened = false
         end
-    end)
+    end
 end
 
 local Title = Instance.new("TextLabel")
