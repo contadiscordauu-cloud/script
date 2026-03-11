@@ -678,10 +678,13 @@ local function updateGalaxyForce()
             mass = mass + p:GetMass()
         end
     end
-    -- Slider de 0-50: 0 = normal, 50 = 2x mais pesado
-    local gravityMultiplier = 1 + (sliderValues.gravity / 50)
-    local tg = DEFAULT_GRAVITY * gravityMultiplier
-    galaxyVectorForce.Force = Vector3.new(0, mass * (DEFAULT_GRAVITY - tg) * 0.95, 0)
+    -- Slider 0-50: 0 = 100% gravidade (normal), 50 = mínima gravidade (leve)
+    -- Quanto MAIOR o slider, MENOR a gravidade
+    local percentGravity = (50 - sliderValues.gravity) / 50
+    local targetG = DEFAULT_GRAVITY * percentGravity
+    local compensate = mass * (DEFAULT_GRAVITY - targetG)
+    
+    galaxyVectorForce.Force = Vector3.new(0, compensate * 0.96, 0)
 end
 
 local function adjustGalaxyJump()
@@ -694,8 +697,8 @@ local function adjustGalaxyJump()
             hum.JumpPower = originalJumpPower
             return
         end
-        local gravityMultiplier = 1 + (sliderValues.gravity / 50)
-        local ratio = math.sqrt((DEFAULT_GRAVITY * gravityMultiplier) / DEFAULT_GRAVITY)
+        local percentGravity = (50 - sliderValues.gravity) / 50
+        local ratio = math.sqrt((DEFAULT_GRAVITY * percentGravity) / DEFAULT_GRAVITY)
         hum.JumpPower = originalJumpPower * ratio
     end)
 end
