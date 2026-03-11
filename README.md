@@ -87,6 +87,11 @@ local function closeGui()
     tween:Play()
     tween.Completed:Wait()
     MainFrame.Visible = false
+    if settingsOpened then
+        TweenService:Create(GearButton, TweenInfo.new(0.5, Enum.EasingStyle.Linear), {Rotation = GearButton.Rotation + 360}):Play()
+        settingsOpened = false
+        closeSettingsGui()
+    end
 end
 
 local Title = Instance.new("TextLabel")
@@ -1383,18 +1388,17 @@ player.AncestryChanged:Connect(function()
     end
 end)
 
--- CAMERA FOLLOW
+-- CAMERA FOLLOW (com rotação do player)
 local camFollowEnabled = false
-local camPrevType = nil
-local camPrevSubject = nil
-local camConn = nil
+local camFollowConnection = nil
+local cam_lookState = {}
 
 local function getHRP()
     local c = player.Character
     return c and c:FindFirstChild("HumanoidRootPart")
 end
 
-local function getClosestPlayerForCam()
+local function getClosestPlayer()
     local root = getHRP()
     if not root then return nil end
     local closest, best = nil, math.huge
@@ -1410,31 +1414,70 @@ local function getClosestPlayerForCam()
     return closest
 end
 
+local function cam_ensureLookSetup(char)
+    if cam_lookState.align and cam_lookState.align.Parent and cam_lookState.lookPart and cam_lookState.lookPart.Parent then return end
+    local hrpLocal = char:FindFirstChild("HumanoidRootPart")
+    if not hrpLocal then return end
+    local lp = Instance.new("Part")
+    lp.Name = "CamFollow_LookPart"
+    lp.Size = Vector3.new(0.2,0.2,0.2)
+    lp.Transparency = 1
+    lp.Anchored = true
+    lp.CanCollide = false
+    lp.Parent = workspace
+
+    local att0 = Instance.new("Attachment", hrpLocal)
+    att0.Name = "CamFollow_HRP_Att"
+    att0.Position = Vector3.new(0,0,0)
+    local att1 = Instance.new("Attachment", lp)
+    att1.Name = "CamFollow_Target_Att"
+
+    local align = Instance.new("AlignOrientation")
+    align.Attachment0 = att0
+    align.Attachment1 = att1
+    align.RigidityEnabled = true
+    align.MaxTorque = 9e8
+    align.Responsiveness = 200
+    align.Parent = hrpLocal
+
+    cam_lookState.lookPart = lp
+    cam_lookState.attHRP = att0
+    cam_lookState.attTarget = att1
+    cam_lookState.align = align
+end
+
+local function cam_cleanupLook()
+    if cam_lookState.align then pcall(function() cam_lookState.align:Destroy() end) end
+    if cam_lookState.attHRP then pcall(function() cam_lookState.attHRP:Destroy() end) end
+    if cam_lookState.lookPart then pcall(function() cam_lookState.lookPart:Destroy() end) end
+    cam_lookState = {}
+end
+
 local function startCamFollow()
-    if camConn then camConn:Disconnect() camConn = nil end
-    local camera = workspace.CurrentCamera
-    camPrevType = camera.CameraType
-    camPrevSubject = camera.CameraSubject
-    
-    camConn = RunService.RenderStepped:Connect(function()
+    if camFollowConnection then camFollowConnection:Disconnect() camFollowConnection = nil end
+    camFollowConnection = RunService.Heartbeat:Connect(function()
         if not camFollowEnabled then return end
-        local target = getClosestPlayerForCam()
-        if target then
+        local root = getHRP()
+        if not root then return end
+        local target = getClosestPlayer()
+        if not target or not target.Parent then
+            cam_cleanupLook()
+            return
+        end
+
+        cam_ensureLookSetup(player.Character)
+        if cam_lookState.lookPart and cam_lookState.lookPart.Parent then
+            local lookPos = Vector3.new(target.Position.X, root.Position.Y, target.Position.Z)
             pcall(function()
-                camera.CameraType = Enum.CameraType.Fixed
-                camera.CFrame = CFrame.new(camera.CFrame.Position, target.Position)
+                cam_lookState.lookPart.CFrame = CFrame.new(root.Position, lookPos)
             end)
         end
     end)
 end
 
 local function stopCamFollow()
-    if camConn then camConn:Disconnect() camConn = nil end
-    local camera = workspace.CurrentCamera
-    pcall(function()
-        if camPrevType then camera.CameraType = camPrevType end
-        if camPrevSubject then camera.CameraSubject = camPrevSubject end
-    end)
+    if camFollowConnection then camFollowConnection:Disconnect() camFollowConnection = nil end
+    cam_cleanupLook()
 end
 
 -- SPIN logic
@@ -1830,6 +1873,13 @@ for _, name in pairs(options) do
     local t = createToggle(name)
     t.Parent = Container
 end
+
+-- Improved drag para SettingsFrame
+createImprovedDrag(SettingsFrame, function()
+    TweenService:Create(SettingsUIScale, TweenInfo.new(0.15), {Scale = 0.97}):Play()
+end, function()
+    TweenService:Create(SettingsUIScale, TweenInfo.new(0.2, Enum.EasingStyle.Back), {Scale = 1}):Play()
+end)
 
 createImprovedDrag(MainFrame, function()
     TweenService:Create(UIScale, TweenInfo.new(0.15), {Scale = 0.97}):Play()
