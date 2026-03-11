@@ -271,6 +271,8 @@ layout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
 end)
 
 -- SLIDER FUNCTION
+local currentlyDraggingSlider = nil
+
 local function CreateSlider(text,min,max,default)
     local holder = Instance.new("Frame")
     holder.Size = UDim2.new(1,-15,0,70)
@@ -342,15 +344,19 @@ local function CreateSlider(text,min,max,default)
 
     thumb.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            if currentlyDraggingSlider ~= nil then return end
             dragging = true
             dragInput = input
+            currentlyDraggingSlider = thumb
         end
     end)
 
     bar.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            if currentlyDraggingSlider ~= nil then return end
             dragging = true
             dragInput = input
+            currentlyDraggingSlider = thumb
             update(input.Position.X)
         end
     end)
@@ -367,6 +373,7 @@ local function CreateSlider(text,min,max,default)
         if input == dragInput then
             dragging = false
             dragInput = nil
+            currentlyDraggingSlider = nil
         end
     end)
 
@@ -427,7 +434,6 @@ CreateSlider("INF JUMP",50,65.8,60)
 CreateSlider("GRAVITY",30,50,30)
 CreateSlider("SPIN",0,30.0,0)
 
-CreateToggle("AUTO LOAD")
 CreateToggle("SAVE CONFIG")
 
 CreateToggle("POTATO MODE",function(state)
@@ -609,7 +615,7 @@ UserInputService.JumpRequest:Connect(function()
     end
 end)
 
--- GRAVITY CONTROLLER LOGIC
+-- ==================== GRAVITY CONTROLLER LOGIC ====================
 local DEFAULT_GRAVITY = 196.2
 local GalaxyGravityPercent = 70
 local HOP_POWER = 35
@@ -1966,5 +1972,5 @@ GearButton.MouseButton1Click:Connect(function()
 end)
 
 print("✓ Script pronto com SLIDER CORRIGIDO!")
-print("✓ Cada slider agora tem seu próprio estado independente!")
-print("✓ Arraste um slider sem afetar os outros!")
+print("✓ Apenas um slider por vez!")
+print("✓ Toggle AUTO LOAD removido!")
