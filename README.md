@@ -275,7 +275,7 @@ local sliderValues = {
     autoSpeed = 45,
     stealSpeed = 27,
     infJump = 60,
-    gravity = 30,
+    gravity = 0,
     spin = 0
 }
 
@@ -453,8 +453,8 @@ end
 CreateSlider("AUTO SPEED",30,60,45)
 CreateSlider("STEAL SPEED",25,29.5,27)
 CreateSlider("INF JUMP",50,65.8,60)
-CreateSlider("GRAVITY",30,50,30)
-CreateSlider("SPIN",0,30.0,0)
+CreateSlider("GRAVITY",0,50,0)
+CreateSlider("SPIN",0,50,0)
 
 CreateToggle("SAVE CONFIG")
 
@@ -678,7 +678,9 @@ local function updateGalaxyForce()
             mass = mass + p:GetMass()
         end
     end
-    local tg = DEFAULT_GRAVITY * (sliderValues.gravity / 100)
+    -- Slider de 0-50: 0 = normal, 50 = 2x mais pesado
+    local gravityMultiplier = 1 + (sliderValues.gravity / 50)
+    local tg = DEFAULT_GRAVITY * gravityMultiplier
     galaxyVectorForce.Force = Vector3.new(0, mass * (DEFAULT_GRAVITY - tg) * 0.95, 0)
 end
 
@@ -692,7 +694,8 @@ local function adjustGalaxyJump()
             hum.JumpPower = originalJumpPower
             return
         end
-        local ratio = math.sqrt((DEFAULT_GRAVITY * (sliderValues.gravity / 100)) / DEFAULT_GRAVITY)
+        local gravityMultiplier = 1 + (sliderValues.gravity / 50)
+        local ratio = math.sqrt((DEFAULT_GRAVITY * gravityMultiplier) / DEFAULT_GRAVITY)
         hum.JumpPower = originalJumpPower * ratio
     end)
 end
@@ -1349,6 +1352,11 @@ local camPrevType = nil
 local camPrevSubject = nil
 local camConn = nil
 
+local function getHRP()
+    local c = player.Character
+    return c and c:FindFirstChild("HumanoidRootPart")
+end
+
 local function getClosestPlayerForCam()
     local root = getHRP()
     if not root then return nil end
@@ -1392,11 +1400,6 @@ local function stopCamFollow()
     end)
 end
 
-local function getHRP()
-    local c = player.Character
-    return c and c:FindFirstChild("HumanoidRootPart")
-end
-
 -- SPIN logic
 local spinActive = false
 
@@ -1421,7 +1424,9 @@ RunService.RenderStepped:Connect(function()
         local r = getHRP()
         if r then
             pcall(function()
-                r.AssemblyAngularVelocity = Vector3.new(0, sliderValues.spin, 0)
+                -- Multiplicar por 2 para aumentar intensidade: 0-50 slider = 0-100 rotação
+                local intensity = sliderValues.spin * 2
+                r.AssemblyAngularVelocity = Vector3.new(0, intensity, 0)
             end)
             local hh = player.Character and player.Character:FindFirstChildOfClass("Humanoid")
             if hh then pcall(function() hh.AutoRotate = false end) end
@@ -1975,11 +1980,11 @@ LeftActivate.MouseButton1Click:Connect(function()
     end)
 end)
 
-local settingsOpened = false
+local settingsOpened2 = false
 GearButton.MouseButton1Click:Connect(function()
     TweenService:Create(GearButton, TweenInfo.new(0.5, Enum.EasingStyle.Linear), {Rotation = GearButton.Rotation + 360}):Play()
-    settingsOpened = not settingsOpened
-    if settingsOpened then
+    settingsOpened2 = not settingsOpened2
+    if settingsOpened2 then
         SettingsFrame.Visible = true
         TweenService:Create(SettingsUIScale, TweenInfo.new(0.35, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Scale = 1}):Play()
         TweenService:Create(SettingsFrame, TweenInfo.new(0.25), {BackgroundTransparency = 0.08}):Play()
@@ -1992,8 +1997,8 @@ GearButton.MouseButton1Click:Connect(function()
 end)
 
 print("✓ Script completo com SLIDERS LIGADOS!")
-print("✓ AUTO SPEED controla velocidade do walkpath (30-60)")
-print("✓ STEAL SPEED pronto para usar (25-29.5)")
-print("✓ INF JUMP controla altura do pulo (50-65.8)")
-print("✓ GRAVITY controla % de gravidade (30-50)")
-print("✓ SPIN controla velocidade de rotação (0-30)")
+print("✓ AUTO SPEED (30-60) - controla velocidade")
+print("✓ STEAL SPEED (25-29.5) - velocidade real")
+print("✓ INF JUMP (50-65.8) - altura do pulo + INFJUMP TOGGLE")
+print("✓ GRAVITY (0-50) - 0=normal, 50=2x gravidade")
+print("✓ SPIN (0-50) - velocidade de rotação com BodyAngularVelocity")
