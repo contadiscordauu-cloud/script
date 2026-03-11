@@ -83,15 +83,27 @@ local function openGui()
 end
 
 local function closeGui()
-    local tween = TweenService:Create(UIScale, TweenInfo.new(0.25, Enum.EasingStyle.Quad), {Scale = 0})
-    tween:Play()
-    tween.Completed:Wait()
-    MainFrame.Visible = false
-    if settingsOpened then
-        TweenService:Create(GearButton, TweenInfo.new(0.5, Enum.EasingStyle.Linear), {Rotation = GearButton.Rotation + 360}):Play()
-        settingsOpened = false
-        closeSettingsGui()
-    end
+    local tweenMain = TweenService:Create(UIScale, TweenInfo.new(0.25, Enum.EasingStyle.Quad), {Scale = 0})
+    local tweenBg = TweenService:Create(MainFrame, TweenInfo.new(0.25), {BackgroundTransparency = 0.1})
+    tweenMain:Play()
+    tweenBg:Play()
+    
+    tweenMain.Completed:Connect(function()
+        MainFrame.Visible = false
+        if settingsOpened then
+            local tweenSettings = TweenService:Create(SettingsUIScale, TweenInfo.new(0.25, Enum.EasingStyle.Quad), {Scale = 0})
+            local tweenSettingsBg = TweenService:Create(SettingsFrame, TweenInfo.new(0.25), {BackgroundTransparency = 0.1})
+            tweenSettings:Play()
+            tweenSettingsBg:Play()
+            
+            tweenSettings.Completed:Connect(function()
+                SettingsFrame.Visible = false
+            end)
+            
+            TweenService:Create(GearButton, TweenInfo.new(0.5, Enum.EasingStyle.Linear), {Rotation = GearButton.Rotation + 360}):Play()
+            settingsOpened = false
+        end
+    end)
 end
 
 local Title = Instance.new("TextLabel")
