@@ -4,6 +4,7 @@ local TweenService = game:GetService("TweenService")
 local RunService = game:GetService("RunService")
 local Workspace = game:GetService("Workspace")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local HttpService = game:GetService("HttpService")
 
 local player = Players.LocalPlayer
 local PlayerGui = player:WaitForChild("PlayerGui")
@@ -293,6 +294,58 @@ local sliderValues = {
     spin = 0
 }
 
+-- Save/Load config (works when exploit env provides writefile/readfile)
+local toggleStates = {}
+local CONFIG_FILE = "duels_config.json"
+
+local function safeWriteFile(name, content)
+    if type(writefile) ~= "function" then return false end
+    local ok, err = pcall(function() writefile(name, content) end)
+    return ok, err
+end
+
+local function safeReadFile(name)
+    if type(readfile) ~= "function" then return nil end
+    local ok, content = pcall(function() return readfile(name) end)
+    if not ok then return nil end
+    return content
+end
+
+local function SaveConfigs()
+    local data = {
+        sliders = sliderValues,
+        toggles = toggleStates
+    }
+    local ok, err = safeWriteFile(CONFIG_FILE, HttpService:JSONEncode(data))
+    return ok, err
+end
+
+local function SaveIfEnabled()
+    if toggleStates["SAVE CONFIG"] then
+        pcall(SaveConfigs)
+    end
+end
+
+local function LoadConfigs()
+    local content = safeReadFile(CONFIG_FILE)
+    if not content then return end
+    local ok, data = pcall(function() return HttpService:JSONDecode(content) end)
+    if not ok or type(data) ~= "table" then return end
+    if type(data.sliders) == "table" then
+        for k,v in pairs(data.sliders) do
+            sliderValues[k] = v
+        end
+    end
+    if type(data.toggles) == "table" then
+        for k,v in pairs(data.toggles) do
+            toggleStates[k] = v
+        end
+    end
+end
+
+-- carregar configs (antes de criar os controles)
+LoadConfigs()
+
 -- SLIDER FUNCTION
 local currentlyDraggingSlider = nil
 
@@ -368,6 +421,8 @@ local function CreateSlider(text,min,max,default)
         elseif text == "SPIN" then
             sliderValues.spin = value
         end
+        -- salvar se ativado
+        pcall(SaveIfEnabled)
     end
 
     local function update(x)
@@ -375,7 +430,7 @@ local function CreateSlider(text,min,max,default)
         local absSize = bar.AbsoluteSize.X
         if absSize > 0 then
             setPercent((x-absPos)/absSize)
-        end
+            setPercent((default-min)/(max-min))
     end
 
     thumb.InputBegan:Connect(function(input)
@@ -448,6 +503,18 @@ local function CreateToggle(text,callback)
     Instance.new("UICorner",circle).CornerRadius = UDim.new(1,0)
 
     local state = false
+    if toggleStates[text] ~= nil then
+        state = toggleStates[text]
+    end
+
+    -- set visual initial state without tween
+    if state then
+        toggle.BackgroundColor3 = Color3.fromRGB(0,140,255)
+        circle.Position = UDim2.new(1,-24,0.5,-11)
+    else
+        toggle.BackgroundColor3 = Color3.fromRGB(40,60,90)
+        circle.Position = UDim2.new(0,2,0.5,-11)
+    end
 
     toggle.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
@@ -460,15 +527,21 @@ local function CreateToggle(text,callback)
                 TweenService:Create(circle,TweenInfo.new(0.25),{Position = UDim2.new(0,2,0.5,-11)}):Play()
             end
             if callback then callback(state) end
+            toggleStates[text] = state
+            pcall(SaveIfEnabled)
         end
     end)
+    -- apply initial behavior if loaded as enabled
+    if state and callback then
+        pcall(function() callback(state) end)
+    end
 end
 
-CreateSlider("AUTO SPEED",30,60,45)
-CreateSlider("STEAL SPEED",25,29.5,27)
-CreateSlider("INF JUMP",50,53.7,60)
-CreateSlider("GRAVITY",0,30.5,0)
-CreateSlider("SPIN",0,50,0)
+CreateSlider("AUTO SPEED",30,60,sliderValues.autoSpeed)
+CreateSlider("STEAL SPEED",25,29.5,sliderValues.stealSpeed)
+CreateSlider("INF JUMP",50,53.7,sliderValues.infJump)
+CreateSlider("GRAVITY",0,30.5,sliderValues.gravity)
+CreateSlider("SPIN",0,50,sliderValues.spin)
 
 CreateToggle("SAVE CONFIG")
 
@@ -1800,6 +1873,18 @@ local function createToggle(text)
     Instance.new("UICorner", Circle).CornerRadius = UDim.new(1,0)
 
     local enabled = false
+    if toggleStates[text] ~= nil then
+        enabled = toggleStates[text]
+    end
+
+    -- initial visuals
+    if enabled then
+        Toggle.BackgroundColor3 = Color3.fromRGB(0,140,255)
+        Circle.Position = UDim2.new(1,-18,0.5,-8)
+    else
+        Toggle.BackgroundColor3 = Color3.fromRGB(60,60,60)
+        Circle.Position = UDim2.new(0,2,0.5,-8)
+    end
 
     local function animate(state)
         if state then
@@ -1815,6 +1900,9 @@ local function createToggle(text)
         if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
             enabled = not enabled
             animate(enabled)
+
+            toggleStates[text] = enabled
+            pcall(SaveIfEnabled)
 
             if text == "LEFT" then
                 if enabled then openLeftPanel() else closeLeftPanel() end
@@ -1873,6 +1961,38 @@ local function createToggle(text)
             end
         end
     end)
+
+    -- apply initial behavior for loaded enabled toggles
+    if enabled then
+        if text == "LEFT" then
+            openLeftPanel()
+        elseif text == "RIGHT" then
+            openRightPanel()
+        elseif text == "AUTOBAT" then
+            AutoBatPanel.Visible = true
+        elseif text == "AUTOBACK" then
+            autoBackEnabled = true
+        elseif text == "XRAY" then
+            xrayEnabled = true
+            xrayGen = xrayGen + 1
+        elseif text == "INFJUMP" then
+            jumpActive = true
+        elseif text == "SPIN" then
+            enableSpin()
+        elseif text == "ANTIRAGDOLL" then
+            AntiRagdollEnabled = true
+            pcall(function() antiStartSystem() antiRemoveRagdollInstant() end)
+        elseif text == "ESPPLAYER" then
+            enableESP()
+        elseif text == "UNWALK" then
+            enableUnwalk()
+        elseif text == "CAMFOLLOW" then
+            camFollowEnabled = true
+            startCamFollow()
+        elseif text == "FLOAT" then
+            enableGravity()
+        end
+    end
 
     return Holder
 end
